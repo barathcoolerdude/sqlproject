@@ -1,0 +1,133 @@
+use walmartdata;
+commit;
+SELECT * FROM sqlpro;
+alter table sqlpro
+rename column `tax 5%`to vat;
+select Time_now,
+(
+    case 
+	when Time_now between "00:00:00" and "12:00:00" then "morning"
+    when Time_now between "12:00:01" and "16:00:00" then "afternoon"
+	else "evening"
+    end
+    )as time_of_date 
+from sqlpro;
+
+#added time_of_day
+update sqlpro
+set time_of_day=(
+case 
+	when time_now between '00:00:00' and '12:00:00' then 'morning'
+    when time_now between '12:00:00' and '16:00:00' then 'afternoon'
+    else 'evening'
+    end
+    );
+
+#change date formate
+UPDATE sqlpro
+SET date_now = DATE_FORMAT(STR_TO_DATE(date_now, '%d-%m-%Y'), '%Y-%m-%d');
+
+select date_now,dayname(date_now) as day_name
+from sqlpro;
+
+alter table sqlpro add column day_name varchar(50);
+
+update sqlpro
+set day_name=dayname(date_now);
+
+#month name
+select date_now,monthname(date_now)
+from sqlpro;
+
+alter table sqlpro 
+add column month_name varchar(20);
+
+update sqlpro
+set month_name=monthname(date_now);
+
+#How many unique cities does the data have
+select distinct city
+from sqlpro;
+
+#In which city is each branch
+select distinct city,branch 
+from sqlpro;
+
+#How many unique product lines does the data have
+alter table sqlpro 
+rename column `product line` to productline;
+
+select count(distinct productline)
+from sqlpro;
+
+#What is the most common payment method
+select distinct payment,count(payment) as pay
+from sqlpro
+group by payment
+order by pay desc;
+
+#What is the most selling product line
+select distinct(productline),count(productline) as countproduct
+from sqlpro
+group by productline
+order by countproduct desc;
+
+#What is the total revenue by month
+select month_name ,sum(total) as revenue
+from sqlpro
+group by month_name;
+
+#What month had the largest COGS
+select distinct(month_name) as months,sum(cogs) as sumcogs
+from sqlpro
+group by months
+order by sumcogs desc;
+
+
+#What product line had the largest revenue
+select distinct(productline) as pro,sum(total) as total
+from sqlpro
+group by pro;
+
+#What is the city with the largest revenue
+select distinct(city),sum(total) as total
+from sqlpro
+group by city
+order by total;
+
+#What product line had the largest VAT
+select productline,avg(vat) as vat
+from sqlpro
+group by productline
+order by vat desc;
+
+#Fetch each product line and add a column to those product line showing "Good", "Bad". Good if its greater than average sales
+SELECT 
+productline,
+ROUND(AVG(total),2) AS avg_sales,
+(CASE
+WHEN AVG(total) > (SELECT AVG(total) FROM sqlpro) THEN "Good"
+ELSE "Bad"
+END)
+AS Remarks
+FROM sqlpro
+GROUP BY productline;
+
+
+#Which branch sold more products than average product sold
+select branch,sum(quantity) as qty
+from sqlpro
+group by branch
+having sum(quantity) > (select avg(quantity) from sqlpro)
+order by qty desc;
+
+#What is the most common product line by gender
+select gender,productline,count(gender) as gen
+from sqlpro
+group by gender,productline
+order by gen desc;
+
+#What is the average rating of each product line
+select productline,avg(rating) as average_rating
+from sqlpro
+group by productline;
